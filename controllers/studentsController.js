@@ -49,7 +49,7 @@ const getStudentByIdNumber = async (req, res) => {
 const registerCourseGradeByIdNumber = async (req, res) => {
     try {
         const idNumber = req.params.id;
-        const { language, level, module, course, score, courseStart, courseEnd, teacher } = req.body;
+        const { course, score, courseStart, courseEnd, teacher } = req.body;
 
         // Find the student by email
         const student = await Student.findOne({ idNumber: idNumber });
