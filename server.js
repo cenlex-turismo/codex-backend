@@ -1,4 +1,4 @@
-if(process.env.NODE_ENV != "production"){
+if (process.env.NODE_ENV != "production") {
     require("dotenv").config()
 }
 
@@ -20,9 +20,9 @@ app.get('/', (req, res) => {
 
 app.post('/createStudent', studentsController.createStudent);
 
-app.get('/getStudent/:id', studentsController.getStudentByEmail);
+app.get('/getStudent/:id', studentsController.getStudentByIdNumber);
 
-app.put('/registerCourseGrade/:id', studentsController.registerCourseGradeByEmail);
+app.put('/registerCourseGrade/:id', studentsController.registerCourseGradeByIdNumber);
 
 app.delete('/maintenance', studentsController.maintenance);
 

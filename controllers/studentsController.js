@@ -1,37 +1,37 @@
 const Student = require("../models/student");
 
 const createStudent = async (req, res) => {
-    const {firstName ,lastName , email} = req.body;
+    const { firstName, lastName, idNumber } = req.body;
 
     try {
 
-        const existingStudent = await Student.findOne({ email });
+        const existingStudent = await Student.findOne({ idNumber });
         if (existingStudent) {
-            return res.status(400).json({ message: 'Student with this email already exists' });
+            return res.status(400).json({ message: 'Student with this id already exists' });
         }
 
         const currentDate = new Date();
 
         const student = await Student.create({
+            idNumber: idNumber,
             firstName: firstName,
             lastName: lastName,
-            email: email,
             lastModified: currentDate
         });
 
         res.json({ student: student });
     }
-    catch(err){
+    catch (err) {
         res.status(500).json({ message: 'An error occurred while creating the student', error: err.message });
     }
 };
 
-const getStudentByEmail = async (req, res) => {
+const getStudentByIdNumber = async (req, res) => {
     try {
-        const email = req.params.id;
+        const idNumber = req.params.id;
 
         // Find the student by email
-        const student = await Student.findOne({ email });
+        const student = await Student.findOne({ idNumber });
 
         // Check if student exists
         if (!student) {
@@ -46,20 +46,20 @@ const getStudentByEmail = async (req, res) => {
     }
 };
 
-const registerCourseGradeByEmail = async(req, res) => {
+const registerCourseGradeByIdNumber = async (req, res) => {
     try {
-        const email = req.params.id;
-        const { level, module, score } = req.body;
+        const idNumber = req.params.id;
+        const { language, level, module, course, score, courseStart, courseEnd, teacher } = req.body;
 
         // Find the student by email
-        const student = await Student.findOne({ email: email });
+        const student = await Student.findOne({ idNumber: idNumber });
 
         if (!student) {
             return res.status(404).json({ message: "Student not found" });
         }
 
         // Check if the course already exists in the courseGrades array
-        const existingGradeIndex = student.courseGrades.findIndex(grade => grade.level == level && grade.module == module);
+        const existingGradeIndex = student.courseGrades.findIndex(grade => grade.course == course);
 
         if (existingGradeIndex !== -1) {
             // If the course already exists, update the score
@@ -67,19 +67,21 @@ const registerCourseGradeByEmail = async(req, res) => {
         } else {
             // If the course does not exist, add a new entry
             student.courseGrades.push({
-                level: level,
-                module: module,
-                score: score
+                course: course,
+                score: score,
+                courseStart: courseStart,
+                courseEnd: courseEnd,
+                teacher: teacher
             });
         }
 
         // Update the student document in the database
         const currentDate = new Date();
-        const studentUpdated = await Student.findOneAndUpdate({ email: email }, {
+        const studentUpdated = await Student.findOneAndUpdate({ idNumber: idNumber }, {
             $set: {
                 courseGrades: student.courseGrades,
                 lastModified: currentDate
-             }
+            }
         }, { new: true });
 
         res.json(studentUpdated);
@@ -109,7 +111,7 @@ const maintenance = async (req, res) => {
 
 module.exports = {
     createStudent: createStudent,
-    getStudentByEmail: getStudentByEmail,
-    registerCourseGradeByEmail: registerCourseGradeByEmail,
+    getStudentByIdNumber: getStudentByIdNumber,
+    registerCourseGradeByIdNumber: registerCourseGradeByIdNumber,
     maintenance: maintenance
 }
