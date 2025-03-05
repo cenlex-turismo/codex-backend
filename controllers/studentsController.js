@@ -31,7 +31,10 @@ const getStudentByIdNumber = async (req, res) => {
         const idNumber = req.params.id;
 
         // Find the student by email
-        const student = await Student.findOne({ idNumber });
+        const student = await Student.findOne({ idNumber })
+            .populate('courseGrades.course')
+            .populate('courseGrades.teacher')
+            .exec();
 
         // Check if student exists
         if (!student) {
@@ -63,7 +66,13 @@ const registerCourseGradeByIdNumber = async (req, res) => {
 
         if (existingGradeIndex !== -1) {
             // If the course already exists, update the score
-            student.courseGrades[existingGradeIndex].score = score;
+            student.courseGrades[existingGradeIndex] = {
+                course: course,
+                score: score,
+                courseStart: courseStart,
+                courseEnd: courseEnd,
+                teacher: teacher
+            };
         } else {
             // If the course does not exist, add a new entry
             student.courseGrades.push({
