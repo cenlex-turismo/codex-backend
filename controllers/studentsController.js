@@ -1,13 +1,21 @@
 const Student = require("../models/student");
 
 const createStudent = async (req, res) => {
-    const { firstName, lastName, idNumber } = req.body;
+    const { firstName, lastName, studentType } = req.body;
+    var { idNumber } = req.body;
 
     try {
 
-        const existingStudent = await Student.findOne({ idNumber });
-        if (existingStudent) {
-            return res.status(400).json({ message: 'Student with this id already exists' });
+        if (studentType === '2') {
+            do {
+                idNumber = Math.floor(3000000000 + Math.random() * 1000000000);
+                var existingStudent = await Student.findOne({ idNumber });
+            } while (existingStudent);
+        } else {
+            const existingStudent = await Student.findOne({ idNumber });
+            if (existingStudent) {
+                return res.status(400).json({ message: 'Student with this ID already exists' });
+            }
         }
 
         const currentDate = new Date();
@@ -22,6 +30,7 @@ const createStudent = async (req, res) => {
         res.json({ student: student });
     }
     catch (err) {
+        console.log(err)
         res.status(500).json({ message: 'An error occurred while creating the student', error: err.message });
     }
 };
