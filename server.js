@@ -28,6 +28,8 @@ app.put('/registerCourseGrade/:id', studentsController.registerCourseGradeByIdNu
 
 app.delete('/maintenance', studentsController.maintenance);
 
+app.get('/filterStudents', studentsController.filterStudents);
+
 app.post('/createTeacher', teachersController.createTeacher);
 
 app.get('/getAllTeachers', teachersController.getAllTeachers);
