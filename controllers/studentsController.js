@@ -154,60 +154,75 @@ const filterStudents = async (req, res) => {
             query.lastName = { $regex: lastName, $options: 'i' }; // Case-insensitive partial match
         }
 
-        if (course !== "") query.course = course;
-        if (teacher !== "") query.teacher = teacher;
+        // Build courseGrades query using $elemMatch for nested conditions
+        const courseGradesQuery = {};
+
+        // Add conditions for course
+        if (course !== "") {
+            courseGradesQuery.course = course; // Match by ObjectId
+        }
 
         // Handle score condition
         if (score !== "") {
             switch (scoreCondition) {
-                case 'equal':
-                    query.score = { $eq: score };
+                case "equal":
+                    courseGradesQuery.score = { $eq: score };
                     break;
-                case 'greater':
-                    query.score = { $gt: score };
+                case "greater":
+                    courseGradesQuery.score = { $gt: score };
                     break;
-                case 'less':
-                    query.score = { $lt: score };
+                case "less":
+                    courseGradesQuery.score = { $lt: score };
                     break;
                 default:
-                    query.score = score; // Default to exact match if no condition is provided
+                    courseGradesQuery.score = score; // Default to exact match if no condition is provided
             }
         }
 
         // Handle courseStart condition
         if (courseStart !== "") {
             switch (courseStartCondition) {
-                case 'equal':
-                    query.courseStart = { $eq: new Date(courseStart) };
+                case "equal":
+                    courseGradesQuery.courseStart = { $eq: new Date(courseStart) };
                     break;
-                case 'greater':
-                    query.courseStart = { $gt: new Date(courseStart) };
+                case "greater":
+                    courseGradesQuery.courseStart = { $gt: new Date(courseStart) };
                     break;
-                case 'less':
-                    query.courseStart = { $lt: new Date(courseStart) };
+                case "less":
+                    courseGradesQuery.courseStart = { $lt: new Date(courseStart) };
                     break;
                 default:
-                    query.courseStart = new Date(courseStart); // Default to exact match if no condition is provided
+                    courseGradesQuery.courseStart = new Date(courseStart); // Default to exact match if no condition is provided
             }
         }
 
         // Handle courseEnd condition
         if (courseEnd !== "") {
             switch (courseEndCondition) {
-                case 'equal':
-                    query.courseEnd = { $eq: new Date(courseEnd) };
+                case "equal":
+                    courseGradesQuery.courseEnd = { $eq: new Date(courseEnd) };
                     break;
-                case 'greater':
-                    query.courseEnd = { $gt: new Date(courseEnd) };
+                case "greater":
+                    courseGradesQuery.courseEnd = { $gt: new Date(courseEnd) };
                     break;
-                case 'less':
-                    query.courseEnd = { $lt: new Date(courseEnd) };
+                case "less":
+                    courseGradesQuery.courseEnd = { $lt: new Date(courseEnd) };
                     break;
                 default:
-                    query.courseEnd = new Date(courseEnd); // Default to exact match if no condition is provided
+                    courseGradesQuery.courseEnd = new Date(courseEnd); // Default to exact match if no condition is provided
             }
         }
 
+        // Add teacher condition
+        if (teacher !== "") {
+            courseGradesQuery.teacher = teacher; // Match by ObjectId
+        }
+
+        // Add $elemMatch if courseGradesQuery is not empty
+        if (Object.keys(courseGradesQuery).length > 0) {
+            query.courseGrades = { $elemMatch: courseGradesQuery };
+        }
+        
         // Find the student by email
         const students = await Student.find(query);
 
