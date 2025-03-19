@@ -222,7 +222,7 @@ const filterStudents = async (req, res) => {
         if (Object.keys(courseGradesQuery).length > 0) {
             query.courseGrades = { $elemMatch: courseGradesQuery };
         }
-        
+
         // Find the student by email
         const students = await Student.find(query);
 
