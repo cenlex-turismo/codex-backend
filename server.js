@@ -1,5 +1,5 @@
-if (process.env.NODE_ENV != "production") {
-    require("dotenv").config()
+if (process.env.NODE_ENV !== "production") {
+    require("dotenv").config();
 }
 
 const express = require("express");
@@ -10,37 +10,44 @@ const teachersController = require("./controllers/teachersController");
 const coursesController = require("./controllers/coursesController");
 const usersController = require("./controllers/usersController");
 
+// Initialize Express app
 const app = express();
-app.use(express.json());
-app.use(cors());
+
+// Middleware
+app.use(express.json()); // Parse JSON requests
+app.use(cors()); // Enable CORS for all origins
+
+// Database connection
 connectToDb();
 
-app.get('/', (req, res) => {
+// Default route
+app.get("/", (req, res) => {
     res.json({
-        hello: "World"
-    })
+        message: "Hello, World!",
+    });
 });
 
-app.post('/createStudent', studentsController.createStudent);
+// Student routes
+app.post("/createStudent", studentsController.createStudent);
+app.get("/getStudent/:id", studentsController.getStudentByIdNumber);
+app.put("/registerCourseGrade/:id", studentsController.registerCourseGradeByIdNumber);
+app.delete("/maintenance", studentsController.maintenance);
+app.get("/filterStudents", studentsController.filterStudents);
 
-app.get('/getStudent/:id', studentsController.getStudentByIdNumber);
+// Teacher routes
+app.post("/createTeacher", teachersController.createTeacher);
+app.get("/getAllTeachers", teachersController.getAllTeachers);
 
-app.put('/registerCourseGrade/:id', studentsController.registerCourseGradeByIdNumber);
+// Course routes
+app.post("/createCourse", coursesController.createCourse);
+app.get("/getAllCourses", coursesController.getAllCourses);
 
-app.delete('/maintenance', studentsController.maintenance);
+// User routes
+app.post("/createUser", usersController.createUser);
+app.post("/authenticateUser", usersController.authenticateUser); // Use POST for authentication
 
-app.get('/filterStudents', studentsController.filterStudents);
-
-app.post('/createTeacher', teachersController.createTeacher);
-
-app.get('/getAllTeachers', teachersController.getAllTeachers);
-
-app.post('/createCourse', coursesController.createCourse);
-
-app.get('/getAllCourses', coursesController.getAllCourses);
-
-app.post('/createUser', usersController.createUser);
-
-app.get('/authenticateUser', usersController.authenticateUser);
-
-app.listen(process.env.PORT);
+// Start server
+const PORT = process.env.PORT || 3000; // Fallback to port 3000 if not set in .env
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});

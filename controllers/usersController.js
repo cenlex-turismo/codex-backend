@@ -27,7 +27,7 @@ const createUser = async (req, res) => {
 };
 
 const authenticateUser = async (req, res) => {
-    const { email, password } = req.query;
+    const { email, password } = req.body;
 
     try {
         // Find user by email
