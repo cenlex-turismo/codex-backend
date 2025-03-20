@@ -41,4 +41,6 @@ app.get('/getAllCourses', coursesController.getAllCourses);
 
 app.post('/createUser', usersController.createUser);
 
+app.get('/authenticateUser', usersController.authenticateUser);
+
 app.listen(process.env.PORT);
