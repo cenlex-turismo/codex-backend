@@ -1,3 +1,5 @@
+import generateToken from "../utils/generateToken";
+
 const User = require("../models/user");
 const bcrypt = require('bcrypt');
 
@@ -41,6 +43,8 @@ const authenticateUser = async (req, res) => {
         if (!isPasswordValid) {
             return res.status(401).json({ message: 'Authentication failed. Invalid password.' });
         }
+
+        generateToken(res, user._id);
 
         // Authentication successful
         res.json({ user: user });
