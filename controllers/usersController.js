@@ -46,7 +46,12 @@ const authenticateUser = async (req, res) => {
         generateToken(res, user._id);
 
         // Authentication successful
-        res.json({ user: user });
+        res.json({
+            user: {
+                firstName: user.firstName,
+                lastName: user.lastName
+            }
+        });
     } catch (err) {
         res.status(500).json({
             message: 'An error occurred while authenticating the user',
