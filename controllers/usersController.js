@@ -1,5 +1,4 @@
-import generateToken from "../utils/generateToken";
-
+const generateToken = require("../utils/generateToken");
 const User = require("../models/user");
 const bcrypt = require('bcrypt');
 

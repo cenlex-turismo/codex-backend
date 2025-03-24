@@ -5,17 +5,25 @@ if (process.env.NODE_ENV !== "production") {
 const express = require("express");
 const cors = require("cors");
 const connectToDb = require("./config/connectToDb");
-const studentsController = require("./controllers/studentsController");
+const cookieParser = require("cookie-parser");
+const studentRoutes = require("./routes/studentRoutes");
 const teachersController = require("./controllers/teachersController");
 const coursesController = require("./controllers/coursesController");
 const usersController = require("./controllers/usersController");
+const { verifyToken } = require("./middleware/authMiddleware");
 
 // Initialize Express app
 const app = express();
 
 // Middleware
 app.use(express.json()); // Parse JSON requests
-app.use(cors()); // Enable CORS for all origins
+app.use(cookieParser());
+app.use(
+    cors({
+        origin: "http://148.204.11.20:3001", // Replace with your frontend's URL
+        credentials: true, // Allow credentials (cookies) to be sent
+    })
+);
 
 // Database connection
 connectToDb();
@@ -28,11 +36,7 @@ app.get("/", (req, res) => {
 });
 
 // Student routes
-app.post("/createStudent", studentsController.createStudent);
-app.get("/getStudent/:id", studentsController.getStudentByIdNumber);
-app.put("/registerCourseGrade/:id", studentsController.registerCourseGradeByIdNumber);
-app.delete("/maintenance", studentsController.maintenance);
-app.get("/filterStudents", studentsController.filterStudents);
+app.use("/student", verifyToken, studentRoutes);
 
 // Teacher routes
 app.post("/createTeacher", teachersController.createTeacher);
