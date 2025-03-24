@@ -7,9 +7,9 @@ const cors = require("cors");
 const connectToDb = require("./config/connectToDb");
 const cookieParser = require("cookie-parser");
 const studentRoutes = require("./routes/studentRoutes");
-const teachersController = require("./controllers/teachersController");
-const coursesController = require("./controllers/coursesController");
-const usersController = require("./controllers/usersController");
+const courseRoutes = require("./routes/courseRoutes");
+const teacherRoutes = require("./routes/teacherRoutes");
+const userRoutes = require("./routes/userRoutes");
 const { verifyToken } = require("./middleware/authMiddleware");
 
 // Initialize Express app
@@ -39,16 +39,13 @@ app.get("/", (req, res) => {
 app.use("/student", verifyToken, studentRoutes);
 
 // Teacher routes
-app.post("/createTeacher", teachersController.createTeacher);
-app.get("/getAllTeachers", teachersController.getAllTeachers);
+app.use("/teacher", verifyToken, teacherRoutes);
 
 // Course routes
-app.post("/createCourse", coursesController.createCourse);
-app.get("/getAllCourses", coursesController.getAllCourses);
+app.use("/course", verifyToken, courseRoutes);
 
 // User routes
-app.post("/createUser", usersController.createUser);
-app.post("/authenticateUser", usersController.authenticateUser); // Use POST for authentication
+app.use("/user", userRoutes);
 
 // Start server
 const PORT = process.env.PORT || 3000; // Fallback to port 3000 if not set in .env
