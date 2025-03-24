@@ -55,7 +55,17 @@ const authenticateUser = async (req, res) => {
     }
 };
 
+const logoutUser = async (req, res) => {
+    res.clearCookie('jwt', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'None'
+    });
+    res.status(200).json({ message: "Logged out successfully" });
+};
+
 module.exports = {
     createUser: createUser,
-    authenticateUser: authenticateUser
+    authenticateUser: authenticateUser,
+    logoutUser: logoutUser
 }
