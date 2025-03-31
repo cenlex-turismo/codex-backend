@@ -19,4 +19,13 @@ describe("User Routes", () => {
         expect(response.body).toHaveProperty("message");
         expect(response.body.message).toBe("Authentication failed. Invalid password.");
     });
+
+    it("should logout the user", async () => {
+        const response = await request(app)
+            .post("/user/logoutUser");
+        expect(response.statusCode).toBe(200);
+        expect(response.headers["set-cookie"]).toStrictEqual([
+            'jwt=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Secure; SameSite=None'
+        ]);
+    });
 });

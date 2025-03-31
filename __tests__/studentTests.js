@@ -23,7 +23,7 @@ describe("Student Routes", () => {
         expect(response.body).toHaveProperty("student");
     });
 
-    it("should some students", async () => {
+    it("should return some students", async () => {
         // Step 2: Send the extracted cookie in the request
         const response = await request(app)
             .get("/student/filterStudents")
