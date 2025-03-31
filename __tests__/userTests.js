@@ -1,7 +1,7 @@
 const request = require("supertest");
 const app = require("../app");
 
-describe("Student Routes", () => {
+describe("User Routes", () => {
     it("should authenticate the user", async () => {
         const response = await request(app)
             .post("/user/authenticateUser")
