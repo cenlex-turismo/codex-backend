@@ -33,4 +33,14 @@ describe("Student Routes", () => {
 
         expect(response.body).toHaveProperty("students");
     });
+
+    it("should return a pdf", async () => {
+        // Step 2: Send the extracted cookie in the request
+        const response = await request(app)
+            .get("/student/generateTranscript")
+            .set("Cookie", authCookie) // Attach cookie manually
+            .expect(200);
+
+        expect(response.headers['content-type']).toBe("application/pdf");
+    });
 });

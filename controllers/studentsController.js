@@ -1,5 +1,6 @@
 const { query } = require("express");
 const Student = require("../models/student");
+const PDFDocument = require("pdfkit");
 
 const createStudent = async (req, res) => {
     const { firstName, lastName, studentType } = req.body;
@@ -246,7 +247,7 @@ const generateTranscript = async (req, res) => {
     res.setHeader("Content-Disposition", "attachment; filename=generated.pdf");
 
     doc.pipe(res);
-    doc.fontSize(16).text("This is a dynamically generated PDF from the server!", 100, 100);
+    doc.fontSize(16).text("To be changed later", 100, 100);
     doc.end();
 };
 
