@@ -240,10 +240,21 @@ const filterStudents = async (req, res) => {
     }
 };
 
+const generateTranscript = async (req, res) => {
+    const doc = new PDFDocument();
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "attachment; filename=generated.pdf");
+
+    doc.pipe(res);
+    doc.fontSize(16).text("This is a dynamically generated PDF from the server!", 100, 100);
+    doc.end();
+};
+
 module.exports = {
     createStudent: createStudent,
     getStudentByIdNumber: getStudentByIdNumber,
     registerCourseGradeByIdNumber: registerCourseGradeByIdNumber,
     maintenance: maintenance,
-    filterStudents: filterStudents
+    filterStudents: filterStudents,
+    generateTranscript: generateTranscript
 }
