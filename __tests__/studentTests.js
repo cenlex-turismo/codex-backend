@@ -42,5 +42,6 @@ describe("Student Routes", () => {
             .expect(200);
 
         expect(response.headers['content-type']).toBe("application/pdf");
+        expect(response.headers['content-disposition']).toBe("attachment; filename=generated.pdf");
     });
 });

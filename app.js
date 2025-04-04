@@ -11,9 +11,16 @@ const courseRoutes = require("./routes/courseRoutes");
 const teacherRoutes = require("./routes/teacherRoutes");
 const userRoutes = require("./routes/userRoutes");
 const { verifyToken } = require("./middleware/authMiddleware");
+const logger = require("./utils/logger"); // Import logger
 
 // Initialize Express app
 const app = express();
+
+// Middleware for logging requests
+app.use((req, res, next) => {
+    logger.info(`${req.method} ${req.url} from ${req.ip}`);
+    next();
+});
 
 // Middleware
 app.use(express.json()); // Parse JSON requests
@@ -35,16 +42,18 @@ app.get("/", (req, res) => {
     });
 });
 
-// Student routes
+// Protected Routes
 app.use("/student", verifyToken, studentRoutes);
-
-// Teacher routes
 app.use("/teacher", verifyToken, teacherRoutes);
-
-// Course routes
 app.use("/course", verifyToken, courseRoutes);
 
-// User routes
+// User routes (no authentication required for login/signup)
 app.use("/user", userRoutes);
+
+// Global Error Handling Middleware
+app.use((err, req, res, next) => {
+    logger.error(`Error: ${err.message} | Request: ${req.method} ${req.url}`);
+    res.status(500).json({ message: "Internal Server Error" });
+});
 
 module.exports = app;
