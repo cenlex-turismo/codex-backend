@@ -1,6 +1,9 @@
 const generateToken = require("../utils/generateToken");
 const User = require("../models/user");
 const bcrypt = require('bcrypt');
+const jwt = require("jsonwebtoken");
+const logger = require("../utils/logger"); // Import the logger
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const createUser = async (req, res) => {
     const { email, password, firstName, lastName } = req.body;
@@ -69,8 +72,40 @@ const logoutUser = async (req, res) => {
     res.status(200).json({ message: "Logged out successfully" });
 };
 
+const validateUserSession = async (req, res) => {
+    const token = req.cookies.jwt; // Get token from cookies
+
+    if (!token) {
+        logger.warn(`Unauthorized access attempt from IP: ${req.ip}`);
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+
+        const user = await User.findOne({ _id: decoded.userId });
+        if (!user) {
+            return res.status(401).json({ message: 'Authentication failed. User not found.' });
+        }
+
+        logger.info(`User ${decoded.userId} session validated successfully`);
+
+        res.json({
+            user: {
+                firstName: user.firstName,
+                lastName: user.lastName
+            }
+        });
+    } catch (error) {
+        console.log(error);
+        logger.error(`Invalid token from IP: ${req.ip}`);
+        res.status(403).json({ error: "Invalid or expired token" });
+    }
+};
+
 module.exports = {
     createUser: createUser,
     authenticateUser: authenticateUser,
-    logoutUser: logoutUser
+    logoutUser: logoutUser,
+    validateUserSession: validateUserSession
 }

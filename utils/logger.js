@@ -11,7 +11,7 @@ const logger = winston.createLogger({
         winston.format.printf(({ timestamp, level, message }) => `${timestamp} [${level.toUpperCase()}]: ${message}`)
     ),
     transports: [
-        new winston.transports.Console(), // Log to console
+        // new winston.transports.Console(), // Log to console
         new winston.transports.File({ filename: path.join(logsDirectory, "server.log") }) // Log to file
     ],
 });
