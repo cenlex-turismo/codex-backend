@@ -27,7 +27,7 @@ app.use(express.json()); // Parse JSON requests
 app.use(cookieParser());
 app.use(
     cors({
-        origin: "http://148.204.11.20:3001", // Replace with your frontend's URL
+        origin: "https://codex.celexest.com", // Replace with your frontend's URL
         credentials: true, // Allow credentials (cookies) to be sent
     })
 );
