@@ -19,6 +19,7 @@ const createUser = async (req, res) => {
             passwordHash: passwordHash,
             firstName: firstName,
             lastName: lastName,
+            role: "admin"
         });
 
         res.json({ user: user });
@@ -46,7 +47,7 @@ const authenticateUser = async (req, res) => {
             return res.status(401).json({ message: 'Authentication failed. Invalid password.' });
         }
 
-        generateToken(res, user._id);
+        generateToken(res, user._id, user.role);
 
         // Authentication successful
         res.json({

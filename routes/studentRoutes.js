@@ -2,13 +2,14 @@ const express = require("express");
 const router = express.Router();
 
 const studentsController = require("../controllers/studentsController");
+const verifyRoles = require("../middleware/verifyRole");
 
 // Student routes
 router.post("/createStudent", studentsController.createStudent);
-router.get("/getStudent/:id", studentsController.getStudentByIdNumber);
-router.put("/registerCourseGrade/:id", studentsController.registerCourseGradeByIdNumber);
-router.delete("/maintenance", studentsController.maintenance);
-router.get("/filterStudents", studentsController.filterStudents);
-router.get("/generateTranscript", studentsController.generateTranscript);
+router.get("/getStudent/:id", verifyRoles(["student", "teacher", "admin"]), studentsController.getStudentByIdNumber);
+router.put("/registerCourseGrade/:id", verifyRoles(["teacher", "admin"]), studentsController.registerCourseGradeByIdNumber);
+router.delete("/maintenance", verifyRoles(["admin"]), studentsController.maintenance);
+router.get("/filterStudents", verifyRoles(["teacher", "admin"]), studentsController.filterStudents);
+router.get("/generateTranscript", verifyRoles(["teacher", "admin"]), studentsController.generateTranscript);
 
 module.exports = router;

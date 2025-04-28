@@ -2,8 +2,6 @@ const mongoose = require("mongoose");
 
 const studentSchema = new mongoose.Schema({
   idNumber: { type: Number, unique: true },
-  firstName: String,
-  lastName: String,
   courseGrades: [{
     course: {
       type: mongoose.Schema.Types.ObjectId,
@@ -14,7 +12,7 @@ const studentSchema = new mongoose.Schema({
     courseEnd: Date,
     teacher: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Teacher'
+      ref: 'User'
     },
   }],
   lastModified: Date

@@ -1,9 +1,11 @@
 const { query } = require("express");
 const Student = require("../models/student");
+const User = require("../models/user");
 const PDFDocument = require("pdfkit");
+const bcrypt = require('bcrypt');
 
 const createStudent = async (req, res) => {
-    const { firstName, lastName, studentType } = req.body;
+    const { firstName, lastName, email, password, studentType } = req.body;
     var { idNumber } = req.body;
 
     try {
@@ -24,12 +26,22 @@ const createStudent = async (req, res) => {
 
         const student = await Student.create({
             idNumber: idNumber,
-            firstName: firstName,
-            lastName: lastName,
             lastModified: currentDate
         });
 
-        res.json({ student: student });
+        const saltRounds = 10; // Number of salt rounds for bcrypt
+        const passwordHash = await bcrypt.hash(password, saltRounds);
+
+        const user = await User.create({
+            email: email,
+            passwordHash: passwordHash,
+            firstName: firstName,
+            lastName: lastName,
+            role: "student",
+            studentDetails: student._id
+        });
+
+        res.json({ user: user });
     }
     catch (err) {
         console.log(err)
@@ -41,31 +53,42 @@ const getStudentByIdNumber = async (req, res) => {
     try {
         const idNumber = req.params.id;
 
-        // Find the student by email
-        const student = await Student.findOne({ idNumber })
-            .populate('courseGrades.course')
-            .populate('courseGrades.teacher')
-            .exec();
+        // First, find the student by idNumber
+        const student = await Student.findOne({ idNumber });
 
-        // Check if student exists
         if (!student) {
             return res.status(404).json({ message: 'Student not found' });
         }
 
-        // Return the found student
-        res.status(200).json({ student });
+        // Then find the user who references that student
+        const user = await User.findOne({ studentDetails: student._id })
+            .populate({
+                path: 'studentDetails',
+                populate: [
+                    { path: 'courseGrades.course' },
+                    { path: 'courseGrades.teacher' }
+                ]
+            })
+            .exec();
+
+        if (!user) {
+            return res.status(404).json({ message: 'User with this student not found' });
+        }
+
+        // Return the found user
+        res.status(200).json({ student: user });
     } catch (err) {
-        // Handle errors
         res.status(500).json({ message: 'An error occurred while retrieving the student', error: err.message });
     }
 };
+
 
 const registerCourseGradeByIdNumber = async (req, res) => {
     try {
         const idNumber = req.params.id;
         const { course, score, courseStart, courseEnd, teacher } = req.body;
 
-        // Find the student by email
+        // Find the student by idNumber
         const student = await Student.findOne({ idNumber: idNumber });
 
         if (!student) {
@@ -111,6 +134,7 @@ const registerCourseGradeByIdNumber = async (req, res) => {
     }
 };
 
+// Check later
 const maintenance = async (req, res) => {
     try {
         // Get the current date
@@ -132,55 +156,43 @@ const maintenance = async (req, res) => {
 const filterStudents = async (req, res) => {
     try {
         const { idNumber, firstName, lastName, course, score, scoreCondition, courseStart, courseStartCondition, courseEnd, courseEndCondition, teacher } = req.query;
-        const query = {};
 
-        // Handle partial match for idNumber
+        // Build the student query
+        const studentQuery = {};
+
         if (idNumber !== "") {
-            query.$expr = {
+            studentQuery.$expr = {
                 $regexMatch: {
-                    input: { $toString: "$idNumber" }, // Cast idNumber to a string
+                    input: { $toString: "$idNumber" },
                     regex: idNumber,
-                    options: "i", // Case-insensitive
+                    options: "i",
                 },
             };
         }
 
-        // Handle partial match for firstName
-        if (firstName !== "") {
-            query.firstName = { $regex: firstName, $options: 'i' }; // Case-insensitive partial match
-        }
-
-        // Handle partial match for lastName
-        if (lastName !== "") {
-            query.lastName = { $regex: lastName, $options: 'i' }; // Case-insensitive partial match
-        }
-
-        // Build courseGrades query using $elemMatch for nested conditions
+        // Build courseGrades query
         const courseGradesQuery = {};
 
-        // Add conditions for course
         if (course !== "") {
-            courseGradesQuery.course = course; // Match by ObjectId
+            courseGradesQuery.course = course;
         }
 
-        // Handle score condition
         if (score !== "") {
             switch (scoreCondition) {
                 case "equal":
-                    courseGradesQuery.score = { $eq: score };
+                    courseGradesQuery.score = { $eq: Number(score) };
                     break;
                 case "greater":
-                    courseGradesQuery.score = { $gt: score };
+                    courseGradesQuery.score = { $gt: Number(score) };
                     break;
                 case "less":
-                    courseGradesQuery.score = { $lt: score };
+                    courseGradesQuery.score = { $lt: Number(score) };
                     break;
                 default:
-                    courseGradesQuery.score = score; // Default to exact match if no condition is provided
+                    courseGradesQuery.score = Number(score);
             }
         }
 
-        // Handle courseStart condition
         if (courseStart !== "") {
             switch (courseStartCondition) {
                 case "equal":
@@ -193,11 +205,10 @@ const filterStudents = async (req, res) => {
                     courseGradesQuery.courseStart = { $lt: new Date(courseStart) };
                     break;
                 default:
-                    courseGradesQuery.courseStart = new Date(courseStart); // Default to exact match if no condition is provided
+                    courseGradesQuery.courseStart = new Date(courseStart);
             }
         }
 
-        // Handle courseEnd condition
         if (courseEnd !== "") {
             switch (courseEndCondition) {
                 case "equal":
@@ -210,34 +221,53 @@ const filterStudents = async (req, res) => {
                     courseGradesQuery.courseEnd = { $lt: new Date(courseEnd) };
                     break;
                 default:
-                    courseGradesQuery.courseEnd = new Date(courseEnd); // Default to exact match if no condition is provided
+                    courseGradesQuery.courseEnd = new Date(courseEnd);
             }
         }
 
-        // Add teacher condition
         if (teacher !== "") {
-            courseGradesQuery.teacher = teacher; // Match by ObjectId
+            courseGradesQuery.teacher = teacher;
         }
 
-        // Add $elemMatch if courseGradesQuery is not empty
         if (Object.keys(courseGradesQuery).length > 0) {
-            query.courseGrades = { $elemMatch: courseGradesQuery };
+            studentQuery.courseGrades = { $elemMatch: courseGradesQuery };
         }
 
-        // Find the student by email
-        const students = await Student.find(query);
+        // Find students matching the studentQuery
+        const students = await Student.find(studentQuery);
 
-        // Check if student exists
-        if (!students.length) {
-            return res.status(404).json({ message: 'Student not found' });
+        // Get the IDs of the matching students
+        const studentIds = students.map(student => student._id);
+
+        // Now build the User query
+        const userQuery = !students.length ? {
+            role: "student"
+        } : {
+            role: "student",
+            studentDetails: { $in: studentIds }
         }
 
-        // Return the found student
-        res.status(200).json({ students: students });
+        if (firstName !== "") {
+            userQuery.firstName = { $regex: firstName, $options: 'i' };
+        }
+
+        if (lastName !== "") {
+            userQuery.lastName = { $regex: lastName, $options: 'i' };
+        }
+
+        // Find users matching the userQuery and populate the studentDetails
+        const users = await User.find(userQuery)
+            .populate('studentDetails')
+            .exec();
+
+        if (!users.length) {
+            return res.status(404).json({ message: 'No users found matching the given criteria' });
+        }
+
+        res.status(200).json({ students: users });
     } catch (err) {
-        // Handle errors
-        console.log(err)
-        res.status(500).json({ message: 'An error occurred while retrieving the student', error: err.message });
+        console.error(err);
+        res.status(500).json({ message: 'An error occurred while filtering students', error: err.message });
     }
 };
 
