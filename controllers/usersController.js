@@ -94,7 +94,8 @@ const validateUserSession = async (req, res) => {
         res.json({
             user: {
                 firstName: user.firstName,
-                lastName: user.lastName
+                lastName: user.lastName,
+                role: decoded.role
             }
         });
     } catch (error) {

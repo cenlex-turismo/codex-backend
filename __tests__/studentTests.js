@@ -16,7 +16,7 @@ describe("Student Routes", () => {
     it("should return a student", async () => {
         // Step 2: Send the extracted cookie in the request
         const response = await request(app)
-            .get("/student/getStudent/3042641300")
+            .get("/student/getStudent/3713786538")
             .set("Cookie", authCookie) // Attach cookie manually
             .expect(200);
 
