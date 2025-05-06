@@ -105,9 +105,74 @@ const validateUserSession = async (req, res) => {
     }
 };
 
+const updateUser = async (req, res) => {
+    const { currentPassword, password, firstName, lastName } = req.body;
+
+    try {
+        const user = await User.findById(req.user.userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Verificar la contraseña actual
+        const isPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: 'Invalid current password' });
+        }
+
+        if (password && password.trim() !== "") {
+            const saltRounds = 10;
+            user.passwordHash = await bcrypt.hash(password, saltRounds);
+        }
+
+        if (firstName && firstName.trim() !== "" && req.user.role !== "student") {
+            user.firstName = firstName;
+        }
+
+        if (lastName && lastName.trim() !== "" && req.user.role !== "student") {
+            user.lastName = lastName;
+        }
+
+        await user.save();
+
+        res.json({ message: 'User updated successfully', user });
+    } catch (err) {
+        res.status(500).json({
+            message: 'An error occurred while updating the user',
+            error: err.message,
+        });
+    }
+};
+
+const getUserBasicData = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json({
+            userData: {
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email
+            }
+        });
+    } catch (err) {
+        res.status(500).json({
+            message: 'An error occurred while fecthing the user',
+            error: err.message,
+        });
+    }
+};
+
 module.exports = {
     createUser: createUser,
     authenticateUser: authenticateUser,
     logoutUser: logoutUser,
-    validateUserSession: validateUserSession
+    validateUserSession: validateUserSession,
+    updateUser: updateUser,
+    getUserBasicData: getUserBasicData
 }
