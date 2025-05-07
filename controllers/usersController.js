@@ -1,5 +1,6 @@
 const generateToken = require("../utils/generateToken");
 const User = require("../models/user");
+const Student = require("../models/student");
 const bcrypt = require('bcrypt');
 const jwt = require("jsonwebtoken");
 const logger = require("../utils/logger"); // Import the logger
@@ -84,18 +85,25 @@ const validateUserSession = async (req, res) => {
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
 
-        const user = await User.findOne({ _id: decoded.userId });
+        const user = await User.findById(decoded.userId);
         if (!user) {
             return res.status(401).json({ message: 'Authentication failed. User not found.' });
         }
 
         logger.info(`User ${decoded.userId} session validated successfully`);
 
+        let idNumber = 0;
+        if(decoded.role == "student"){
+            const studentDetails = await Student.findById(user.studentDetails);
+            idNumber = studentDetails.idNumber;
+        }
+
         res.json({
             user: {
                 firstName: user.firstName,
                 lastName: user.lastName,
-                role: decoded.role
+                role: decoded.role,
+                idNumber: idNumber
             }
         });
     } catch (error) {
@@ -126,11 +134,11 @@ const updateUser = async (req, res) => {
             user.passwordHash = await bcrypt.hash(password, saltRounds);
         }
 
-        if (firstName && firstName.trim() !== "" && req.user.role !== "student") {
+        if (firstName && firstName.trim() !== "") {
             user.firstName = firstName;
         }
 
-        if (lastName && lastName.trim() !== "" && req.user.role !== "student") {
+        if (lastName && lastName.trim() !== "") {
             user.lastName = lastName;
         }
 

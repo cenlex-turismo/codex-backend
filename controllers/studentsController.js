@@ -76,7 +76,7 @@ const getStudentByIdNumber = async (req, res) => {
         }
 
         // Return the found user
-        res.status(200).json({ student: user });
+        res.status(200).json({ student: user, allowDownload: req.user.role !== "student" });
     } catch (err) {
         res.status(500).json({ message: 'An error occurred while retrieving the student', error: err.message });
     }
