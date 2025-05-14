@@ -11,6 +11,7 @@ const courseRoutes = require("./routes/courseRoutes");
 const teacherRoutes = require("./routes/teacherRoutes");
 const userRoutes = require("./routes/userRoutes");
 const { verifyToken } = require("./middleware/authMiddleware");
+const studentsController = require("./controllers/studentsController");
 const logger = require("./utils/logger"); // Import logger
 
 // Initialize Express app
@@ -48,6 +49,7 @@ app.use("/teacher", verifyToken, teacherRoutes);
 app.use("/course", verifyToken, courseRoutes);
 
 // User routes (no authentication required for login/signup)
+app.post("/createStudent", studentsController.createStudent);
 app.use("/user", userRoutes);
 
 // Global Error Handling Middleware

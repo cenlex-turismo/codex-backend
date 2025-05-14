@@ -5,7 +5,6 @@ const studentsController = require("../controllers/studentsController");
 const verifyRoles = require("../middleware/verifyRole");
 
 // Student routes
-router.post("/createStudent", studentsController.createStudent);
 router.get("/getStudent/:id", verifyRoles(["student", "teacher", "admin"]), studentsController.getStudentByIdNumber);
 router.put("/registerCourseGrade/:id", verifyRoles(["teacher", "admin"]), studentsController.registerCourseGradeByIdNumber);
 router.delete("/maintenance", verifyRoles(["admin"]), studentsController.maintenance);
