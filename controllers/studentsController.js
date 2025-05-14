@@ -134,22 +134,38 @@ const registerCourseGradeByIdNumber = async (req, res) => {
     }
 };
 
-// Check later
 const maintenance = async (req, res) => {
-    try {
-        // Get the current date
-        const twoYearsAgo = new Date();
-        twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+    const years = parseInt(req.params.id, 10);
 
-        // Delete documents where lastModified is older than two years
-        const result = await Student.deleteMany({
-            lastModified: { $lt: twoYearsAgo }
+    try {
+        const yearsAgo = new Date();
+        yearsAgo.setFullYear(yearsAgo.getFullYear() - years);
+
+        // Find students to be deleted
+        const studentsToDelete = await Student.find({
+            lastModified: { $lt: yearsAgo }
         });
 
-        res.json({ message: `Deleted ${result.deletedCount} entries older than two years` });
+        const studentIds = studentsToDelete.map(student => student._id);
+
+        // Delete related users
+        const userResult = await User.deleteMany({
+            studentDetails: { $in: studentIds }
+        });
+
+        // Delete the students
+        const studentResult = await Student.deleteMany({
+            _id: { $in: studentIds }
+        });
+
+        res.json({
+            message: `Deleted ${studentResult.deletedCount} student(s) and ${userResult.deletedCount} related user(s) older than ${years} year(s).`
+        });
     } catch (err) {
-        // Handle errors
-        res.status(500).json({ message: "An error occurred during maintenance", error: err.message });
+        res.status(500).json({
+            message: "An error occurred during maintenance",
+            error: err.message
+        });
     }
 };
 
