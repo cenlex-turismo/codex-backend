@@ -1,8 +1,10 @@
 const { query } = require("express");
 const Student = require("../models/student");
 const User = require("../models/user");
-const PDFDocument = require("pdfkit");
 const bcrypt = require('bcrypt');
+const docx = require("docx");
+
+const { Document, Packer, Paragraph, TextRun } = docx;
 
 const createStudent = async (req, res) => {
     const { firstName, lastName, email, password, studentType } = req.body;
@@ -288,13 +290,108 @@ const filterStudents = async (req, res) => {
 };
 
 const generateTranscript = async (req, res) => {
-    const doc = new PDFDocument();
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", "attachment; filename=generated.pdf");
+    try {
+        // Extract the student ID from the request parameters
+        const idNumber = req.params.id;
 
-    doc.pipe(res);
-    doc.fontSize(16).text("To be changed later", 100, 100);
-    doc.end();
+        // Fetch student data
+        const student = await Student.findOne({ idNumber }).populate({
+            path: "courseGrades.course",
+            model: "Course",
+        });
+
+        if (!student) {
+            return res.status(404).json({ message: "Student not found" });
+        }
+
+        // Fetch user data for the student
+        const user = await User.findOne({ studentDetails: student._id });
+
+        if (!user) {
+            return res.status(404).json({ message: "User data for student not found" });
+        }
+
+        // Create the document
+        const doc = new Document({
+            creator: "CELEX",
+            title: "Historial Académico",
+            description: "Transcripción de cursos y calificaciones",
+            sections: []
+        });
+
+        // Header section
+        doc.addSection({
+            children: [
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: "Secretaría Académica\nDirección de Educación Superior\nEscuela Superior de Turismo",
+                            bold: true,
+                        }),
+                    ],
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: "\nFolio: CELEXEST-HAIXXX-2025\n", bold: true }),
+                    ],
+                }),
+                new Paragraph({
+                    children: [new TextRun({ text: "Asunto: Historial Académico\n\nA QUIEN CORRESPONDA:\n\n" })],
+                }),
+            ],
+        });
+
+        // Dynamic student data
+        doc.addSection({
+            children: [
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: `Con base en la documentación que obra en los expedientes, se hace constar que el C. ${user.firstName} ${user.lastName} con número de boleta ${student.idNumber} concluyó los estudios como se detalla a continuación:\n\n`,
+                        }),
+                    ],
+                }),
+            ],
+        });
+
+        // Add courses dynamically
+        student.courseGrades.forEach((grade) => {
+            doc.addSection({
+                children: [
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: `Curso: ${grade.course.language} | Nivel: ${grade.course.level} | Calificación: ${grade.score} | Periodo: ${new Date(grade.courseStart).toLocaleDateString()} - ${new Date(grade.courseEnd).toLocaleDateString()}\n`,
+                            }),
+                        ],
+                    }),
+                ],
+            });
+        });
+
+        // Footer section
+        doc.addSection({
+            children: [
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: "ATENTAMENTE\n\nLIC. NAYELI SERRANO FERNÁNDEZ\nSUBDIRECTORA DE SERVICIOS EDUCATIVOS\n\n",
+                            bold: true,
+                        }),
+                    ],
+                }),
+            ],
+        });
+
+        // Generate and send the Word document
+        const buffer = await Packer.toBuffer(doc);
+        res.setHeader("Content-Disposition", "attachment; filename=transcript.docx");
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        res.send(buffer);
+    } catch (error) {
+        console.error("Error generating transcript:", error);
+        res.status(500).json({ message: "An error occurred while generating the transcript." });
+    }
 };
 
 module.exports = {

@@ -9,6 +9,6 @@ router.get("/getStudent/:id", verifyRoles(["student", "teacher", "admin"]), stud
 router.put("/registerCourseGrade/:id", verifyRoles(["teacher", "admin"]), studentsController.registerCourseGradeByIdNumber);
 router.delete("/maintenance/:id", verifyRoles(["admin"]), studentsController.maintenance);
 router.get("/filterStudents", verifyRoles(["teacher", "admin"]), studentsController.filterStudents);
-router.get("/generateTranscript", verifyRoles(["teacher", "admin"]), studentsController.generateTranscript);
+router.get("/generateTranscript/:id", verifyRoles(["teacher", "admin"]), studentsController.generateTranscript);
 
 module.exports = router;
