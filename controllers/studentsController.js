@@ -43,7 +43,7 @@ const createStudent = async (req, res) => {
             studentDetails: student._id
         });
 
-        res.json({ user: user });
+        res.json({ idNumber: idNumber });
     }
     catch (err) {
         console.log(err)
