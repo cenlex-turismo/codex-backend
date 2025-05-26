@@ -25,7 +25,8 @@ const {
     HorizontalPositionAlign,
     VerticalPositionAlign,
     convertInchesToTwip,
-    FrameAnchorType
+    FrameAnchorType,
+    Footer
 } = require("docx");
 const fs = require("fs");
 
@@ -346,6 +347,7 @@ const generateTranscript = async (req, res) => {
 
         const children = [];
         const childrenHeader = [];
+        const childrenFooter = [];
 
         // --- IMAGE PLACEHOLDERS (TOP OF PAGE) ---
         // Replace these with actual ImageRun objects when you have images.
@@ -621,28 +623,56 @@ const generateTranscript = async (req, res) => {
             alignment: AlignmentType.CENTER
         }));
 
+        children.push(new Paragraph("")); // Spacing
+        children.push(new Paragraph("")); // Spacing
+
+        children.push(new Paragraph({
+            children: [
+                new TextRun({ text: "M. EN C. ZADITH ILIANA RAJIN VILCHIS                                                 LIC. NAYELI SERRANO FERNÁNDEZ", font: "Montserrat", size: 18, bold: true })
+            ],
+            alignment: AlignmentType.LEFT
+        }));
+
+        children.push(new Paragraph({
+            children: [
+                new TextRun({ text: "SUBDIRECTORA ACADÉMICA INTERINA                                         SUBDIRECTORA DE SERVICIOS EDUCATIVOS", font: "Montserrat", size: 18, bold: true })
+            ],
+            alignment: AlignmentType.LEFT
+        }));
+
+        children.push(new Paragraph({
+            children: [
+                new TextRun({ text: "                                                                                                                        E INTEGRACIÓN SOCIAL INTERINA", font: "Montserrat", size: 18, bold: true })
+            ],
+            alignment: AlignmentType.LEFT
+        }));
+
+        children.push(new Paragraph("")); // Spacing
+        children.push(new Paragraph("")); // Spacing
+        children.push(new Paragraph("")); // Spacing
+        children.push(new Paragraph("")); // Spacing
+
+        children.push(new Paragraph({
+            children: [
+                new TextRun({ text: "DRA. MARISSA ALONSO MARBÁN", font: "Monserrat", size: 18, bold: true })
+            ],
+            alignment: AlignmentType.CENTER
+        }));
+
+        children.push(new Paragraph({
+            children: [
+                new TextRun({ text: "DIRECTORA", font: "Monserrat", size: 18, bold: true })
+            ],
+            alignment: AlignmentType.CENTER
+        }));
+
+        children.push(new Paragraph({
+            children: [
+                new PageBreak()
+            ]
+        }));
+
         // Hasta aqui vamos mas o menos bien
-
-        // --- Signatories ---
-        // As per sources[cite: 5, 6, 7], each signatory block is listed, then repeated.
-        const signatoryDetails = [
-            { title: "LIC.", name: "NAYELI SERRANO FERNÁNDEZ", role: ["SUBDIRECTORA DE SERVICIOS EDUCATIVOS", "E INTEGRACIÓN SOCIAL INTERINA"] }, // [cite: 5]
-            { title: "LIC.", name: "NAYELI SERRANO FERNÁNDEZ", role: ["SUBDIRECTORA DE SERVICIOS EDUCATIVOS", "E INTEGRACIÓN SOCIAL INTERINA"] }, // [cite: 6]
-            { title: "M. EN C.", name: "ZADITH ILIANA RAJIN VILCHIS", role: ["SUBDIRECTORA ACADÉMICA INTERINA"] }, // [cite: 6]
-            { title: "M. EN C.", name: "ZADITH ILIANA RAJIN VILCHIS", role: ["SUBDIRECTORA ACADÉMICA INTERINA"] }, // [cite: 6]
-            { title: "DRA.", name: "MARISSA ALONSO MARBÁN", role: ["DIRECTORA"] }, // [cite: 7]
-            { title: "DRA.", name: "MARISSA ALONSO MARBÁN", role: ["DIRECTORA"] }, // [cite: 7]
-        ];
-
-        signatoryDetails.forEach(sig => {
-            if (sig.title) children.push(new Paragraph({ text: sig.title, alignment: AlignmentType.CENTER }));
-            children.push(new Paragraph({ text: sig.name, alignment: AlignmentType.CENTER, bold: true }));
-            sig.role.forEach(roleLine => {
-                children.push(new Paragraph({ text: roleLine, alignment: AlignmentType.CENTER }));
-            });
-            children.push(new Paragraph("")); // Space after each signatory block
-        });
-        children.push(new Paragraph("")); // Extra space after all signatories
 
         // --- CEFR Competencies Title --- [cite: 7]
         children.push(new Paragraph({
@@ -695,6 +725,57 @@ const generateTranscript = async (req, res) => {
         // --- IMAGE PLACEHOLDERS (BOTTOM OF PAGE) ---
         children.push(new Paragraph({ text: "<<< Placeholder: Official Seal / Additional Logos (Bottom) >>>", alignment: AlignmentType.CENTER }));
 
+        // --- Footer
+
+        childrenFooter.push(new Paragraph({
+            alignment: AlignmentType.RIGHT,
+            frame: {
+                position: {
+                    x: 500,
+                    y: 11900,
+                },
+                width: 10000,
+                height: 1000,
+                anchor: {
+                    horizontal: FrameAnchorType.MARGIN,
+                    vertical: FrameAnchorType.MARGIN,
+                },
+                alignment: {
+                    x: HorizontalPositionAlign.LEFT,
+                    y: VerticalPositionAlign.TOP,
+                },
+            },
+            border: {
+                top: {
+                    color: "auto",
+                    space: 1,
+                    value: "single",
+                    size: 6,
+                },
+                bottom: {
+                    color: "auto",
+                    space: 1,
+                    value: "single",
+                    size: 6,
+                },
+                left: {
+                    color: "auto",
+                    space: 1,
+                    value: "single",
+                    size: 6,
+                },
+                right: {
+                    color: "auto",
+                    space: 1,
+                    value: "single",
+                    size: 6,
+                },
+            },
+            children: [
+                new TextRun({ text: "Av. Miguel Bernard 39, Residencial La Escalera, Alcaldía Gustavo A. Madero, 07630 Ciudad de México Tel: (55) 57296000 ext:55765 https://www.est.ipn.mx", font: "Geomanist Medium", size: 12, color: "#4D192A"}),
+            ],
+        }));
+
         // --- Document Creation ---
         const doc = new Document({
             creator: "CELEXEST", // [cite: 1] (Implied by Folio prefix)
@@ -715,6 +796,11 @@ const generateTranscript = async (req, res) => {
                 headers: { // Example if Folio/Asunto were in a header
                     default: new Header({
                         children: childrenHeader
+                    }),
+                },
+                footers: {
+                    default: new Footer({
+                        children: childrenFooter
                     }),
                 },
                 children: children,
