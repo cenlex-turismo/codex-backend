@@ -19,7 +19,13 @@ const {
     Header,
     ShadingType,
     PageBreak, // If needed for precise page control
-    TextBoxContent, Drawing, Anchor, HorizontalPositionAlign, VerticalPositionAlign, convertInchesToTwip, FrameAnchorType
+    TextBoxContent,
+    Drawing,
+    Anchor,
+    HorizontalPositionAlign,
+    VerticalPositionAlign,
+    convertInchesToTwip,
+    FrameAnchorType
 } = require("docx");
 const fs = require("fs");
 
@@ -364,10 +370,11 @@ const generateTranscript = async (req, res) => {
                 alignment: AlignmentType.CENTER, // Or use a table for precise side-by-side logo placement
             }));
             childrenHeader.push(new Paragraph({
+                alignment: AlignmentType.RIGHT,
                 frame: {
                     position: {
-                        x: 6000,
-                        y: 0,
+                        x: 6450,
+                        y: -500,
                     },
                     width: 4000,
                     height: 1000,
@@ -407,7 +414,10 @@ const generateTranscript = async (req, res) => {
                     },
                 },
                 children: [
-                    new TextRun("Secretaría Académica\nDirección de Educación Superior\nEscuela Superior de Turismo"),
+                    new TextRun({ text: "Secretaría Académica", bold: true, font: "Noto Sans SemiBold", size: 16, break: 1 }),
+                    new TextRun({ text: "Dirección de Educación Superior", bold: true, font: "Noto Sans SemiBold", size: 16, break: 1 }),
+                    new TextRun({ text: "", bold: true, font: "Noto Sans SemiBold", size: 16, break: 1 }),
+                    new TextRun({ text: "Escuela Superior de Turismo", bold: true, font: "Noto Sans SemiBold", size: 16 }),
                 ],
             }));
         } catch (e) {
@@ -422,23 +432,25 @@ const generateTranscript = async (req, res) => {
         // These might be right-aligned in the original document or part of a header.
         // For simplicity, using left-aligned paragraphs here. Add alignment: AlignmentType.RIGHT if needed.
         children.push(new Paragraph({ children: [new TextRun({ text: "Folio", bold: true, font: "Geomanist", size: 18 })] }));
-        children.push(new Paragraph({ text: "CELEXEST-HAIXXX-2025" })); // [cite: 1]
-        children.push(new Paragraph({ children: [new TextRun({ text: "Asunto", bold: true })] }));
-        children.push(new Paragraph({ text: "Historial Académico" })); // [cite: 1]
+        children.push(new Paragraph({ children: [new TextRun({ text: "CELEXEST-HAIXXX-2025", font: "Geomanist", size: 18 })] }));
+        children.push(new Paragraph("")); // Spacing
+        children.push(new Paragraph({ children: [new TextRun({ text: "Asunto", font: "Geomanist", size: 18 })] }));
+        children.push(new Paragraph({ children: [new TextRun({ text: "Historial Académico", bold: true, font: "Geomanist", size: 18 })] }));
         children.push(new Paragraph("")); // Spacing
 
         // --- Addressee --- [cite: 1]
-        children.push(new Paragraph({ text: "A QUIEN CORRESPONDA:", bold: true, alignment: AlignmentType.LEFT }));
+        children.push(new Paragraph({ children: [new TextRun({ text: "A QUIEN CORRESPONDA:", bold: true, font: "Geomanist", size: 18 })], alignment: AlignmentType.LEFT }));
+        children.push(new Paragraph("")); // Spacing
         children.push(new Paragraph("")); // Spacing
 
         // --- Introductory Paragraph --- [cite: 3]
         children.push(new Paragraph({
             children: [
-                new TextRun("Con base en la documentación que obra en los expedientes de los Cursos Extracurriculares de Lenguas Extranjeras (CELEX), hace constar que la C. "),
-                new TextRun({ text: studentName, bold: true }), // [cite: 3]
-                new TextRun(" con número de boleta "),
-                new TextRun({ text: studentId, bold: true }), // [cite: 3]
-                new TextRun(" concluyó los estudios del programa del idioma Inglés de esta Unidad Académica cómo a continuación se detalla:"), // [cite: 3]
+                new TextRun({ text: "               Con base en la documentación que obra en los expedientes de los Cursos Extracurriculares de Lenguas Extranjeras (CELEX), hace constar que la ", font: "Geomanist", size: 18 }),
+                new TextRun({ text: "C. " + studentName, bold: true, font: "Geomanist", size: 18 }), // [cite: 3]
+                new TextRun({ text: " con número de boleta ", font: "Geomanist", size: 18 }),
+                new TextRun({ text: studentId, bold: true, font: "Geomanist", size: 18 }), // [cite: 3]
+                new TextRun({ text: " concluyó los estudios del programa del idioma Inglés de esta Unidad Académica cómo a continuación se detalla:", font: "Geomanist", size: 18 }), // [cite: 3]
             ],
             alignment: AlignmentType.BOTH, // Justified
         }));
@@ -523,20 +535,25 @@ const generateTranscript = async (req, res) => {
 
         // Add total row
         academicHistoryData.push([
-            { text: "Total de horas:", colSpan: 2, bold: true, align: AlignmentType.RIGHT },
-            "", "", "", totalHours.toString(), ""
+            { text: "", colSpan: 3 },
+            { text: "Total de horas:" }, { text: totalHours.toString(), bold: true }, "---"
+        ]);
+
+        academicHistoryData.push([
+            { text: "Programa registrado ante la Dirección de Formación en Lenguas Extranjeras con el número: DFLE-PGII-CELEXEST1-24", colSpan: 6, bold: true }
         ]);
 
 
         const academicHistoryTable = new Table({
             columnWidths: [2000, 1500, 2500, 3000, 1000, 1500], // Adjust widths as needed
+            alignment: AlignmentType.CENTER,
             rows: academicHistoryData.map((rowData, rowIndex) => {
                 const cells = [];
                 rowData.forEach(cellData => {
                     let textContent = "";
                     const textRuns = [];
                     let columnSpan;
-                    let cellAlignment = (rowIndex === 0) ? AlignmentType.CENTER : AlignmentType.LEFT; // Center headers, left-align data
+                    let cellAlignment = AlignmentType.CENTER; // Center headers, left-align data
                     let isBold = (rowIndex === 0); // Headers are bold by default
 
                     if (typeof cellData === 'object' && cellData !== null) {
@@ -547,13 +564,12 @@ const generateTranscript = async (req, res) => {
                     } else {
                         textContent = String(cellData);
                     }
-                    textRuns.push(new TextRun({ text: textContent, bold: isBold }));
+                    textRuns.push(new TextRun({ text: textContent, bold: isBold, font: "Geomanist", size: 18 }));
 
                     cells.push(new TableCell({
                         children: [new Paragraph({ children: textRuns, alignment: cellAlignment })],
                         columnSpan: columnSpan,
                         verticalAlign: VerticalAlign.CENTER,
-                        shading: (rowIndex === 0) ? { type: ShadingType.SOLID, color: "D3D3D3" } : undefined, // Light grey for header
                         borders: { // Example: add all borders
                             top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
                             bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
@@ -566,43 +582,46 @@ const generateTranscript = async (req, res) => {
             }),
         });
         children.push(academicHistoryTable);
-        children.push(new Paragraph("")); // Spacing
-
-        // --- Program Registration Note --- [cite: 2]
-        children.push(new Paragraph({
-            text: "Programa registrado ante la Dirección de Formación en Lenguas Extranjeras con el número: DFLE-PGII-CELEXEST1-24",
-            // Consider a smaller font size or a specific style if needed
-        }));
-        children.push(new Paragraph("")); // Spacing
 
         // --- Legal Basis --- [cite: 3]
         children.push(new Paragraph({
-            children: [new TextRun({ text: "*Con fundamento en el apartado VI DE LOS USUARIOS DE LOS SERVICIOS EDUCATIVOS COMPLEMENTARIOS, numeral 7 y/o 8.", italics: true })],
+            children: [
+                new TextRun({ text: "*Con fundamento en el apartado VI DE LOS USUARIOS DE LOS SERVICIOS EDUCATIVOS COMPLEMENTARIOS, numeral 7 y/o 8.", font: "Geomanist", size: 18 }),
+            ],
         }));
-        children.push(new Paragraph("")); // Spacing
 
         // --- Level Confirmation --- [cite: 3]
         children.push(new Paragraph({
-            text: "El historial muestra que la usuaria ha concluido los estudios correspondientes al nivel B2 de acuerdo con el Marco Común Europeo de Referencia para las Lenguas (MCER).",
-            alignment: AlignmentType.BOTH, // Justified
+            children: [
+                new TextRun({ text: "El historial muestra que la usuaria ha concluido los estudios correspondientes al nivel ", font: "Geomanist", size: 18 }),
+                new TextRun({ text: "B2", font: "Geomanist", size: 18, bold: true }),
+                new TextRun({ text: " de acuerdo con el Marco Común Europeo de Referencia para las Lenguas (MCER).", font: "Geomanist", size: 18 })
+            ],
+            alignment: AlignmentType.BOTH
         }));
-        children.push(new Paragraph("")); // Spacing
 
-        // --- Issuance Statement --- [cite: 4]
         children.push(new Paragraph({
-            text: `A petición de la interesada y para los fines académicos que considere convenientes, se extiende la presente en la Ciudad de México a los ${day} días del mes de ${month} del ${currentYear}.`,
-            alignment: AlignmentType.BOTH, // Justified
+            children: [
+                new TextRun({ text: `A petición de la interesada y para los fines académicos que considere convenientes, se extiende la presente en la Ciudad de México a los ${day} días del mes de ${month} del ${currentYear}.`, font: "Geomanist", size: 18 })
+            ],
+            alignment: AlignmentType.BOTH
         }));
-        children.push(new Paragraph("")); // Spacing
-        children.push(new Paragraph("")); // More Spacing
 
-        // --- Closing and Motto --- [cite: 4]
-        children.push(new Paragraph({ text: "ATENTAMENTE", alignment: AlignmentType.CENTER }));
-        children.push(new Paragraph("")); // Spacing
-        children.push(new Paragraph({ text: "“LA TÉCNICA AL SERVICIO DE LA PATRIA”", alignment: AlignmentType.CENTER, bold: true }));
-        children.push(new Paragraph("")); // Spacing for signature lines
-        children.push(new Paragraph(""));
-        children.push(new Paragraph(""));
+        children.push(new Paragraph({
+            children: [
+                new TextRun({ text: "ATENTAMENTE", font: "Geomanist", size: 18, bold: true })
+            ],
+            alignment: AlignmentType.CENTER
+        }));
+
+        children.push(new Paragraph({
+            children: [
+                new TextRun({ text: "“LA TÉCNICA AL SERVICIO DE LA PATRIA”", font: "Geomanist", size: 18, bold: true })
+            ],
+            alignment: AlignmentType.CENTER
+        }));
+
+        // Hasta aqui vamos mas o menos bien
 
         // --- Signatories ---
         // As per sources[cite: 5, 6, 7], each signatory block is listed, then repeated.
