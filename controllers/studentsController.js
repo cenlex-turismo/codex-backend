@@ -500,7 +500,7 @@ const generateTranscript = async (req, res) => {
         ];
 
         // Build a quick lookup map of English course grades
-        const englishGrades = student.courseGrades.filter(grade => grade.course?.language === "Ingles");
+        const englishGrades = student.courseGrades.filter(grade => grade.course?.language === "Inglés");
         const courseMap = {};
         englishGrades.forEach(grade => {
             const key = `${grade.course.level}-${grade.course.module}`;
