@@ -26,7 +26,10 @@ const {
     VerticalPositionAlign,
     convertInchesToTwip,
     FrameAnchorType,
-    Footer
+    Footer,
+    HeightRule,
+    WidthType,
+    TableLayoutType
 } = require("docx");
 const fs = require("fs");
 
@@ -547,7 +550,11 @@ const generateTranscript = async (req, res) => {
 
 
         const academicHistoryTable = new Table({
-            columnWidths: [2000, 1500, 2500, 3000, 1000, 1500], // Adjust widths as needed
+            width: {
+                size: 100,
+                type: WidthType.PERCENTAGE,
+            },
+            columnWidths: [2000, 1500, 2500, 3000, 1000, 1500], // you may adjust or leave as-is
             alignment: AlignmentType.CENTER,
             rows: academicHistoryData.map((rowData, rowIndex) => {
                 const cells = [];
@@ -555,8 +562,8 @@ const generateTranscript = async (req, res) => {
                     let textContent = "";
                     const textRuns = [];
                     let columnSpan;
-                    let cellAlignment = AlignmentType.CENTER; // Center headers, left-align data
-                    let isBold = (rowIndex === 0); // Headers are bold by default
+                    let cellAlignment = AlignmentType.CENTER;
+                    let isBold = (rowIndex === 0);
 
                     if (typeof cellData === 'object' && cellData !== null) {
                         textContent = cellData.text;
@@ -566,13 +573,19 @@ const generateTranscript = async (req, res) => {
                     } else {
                         textContent = String(cellData);
                     }
-                    textRuns.push(new TextRun({ text: textContent, bold: isBold, font: "Geomanist", size: 18 }));
+
+                    textRuns.push(new TextRun({
+                        text: textContent,
+                        bold: isBold,
+                        font: "Geomanist",
+                        size: 18
+                    }));
 
                     cells.push(new TableCell({
                         children: [new Paragraph({ children: textRuns, alignment: cellAlignment })],
                         columnSpan: columnSpan,
                         verticalAlign: VerticalAlign.CENTER,
-                        borders: { // Example: add all borders
+                        borders: {
                             top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
                             bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
                             left: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
@@ -580,7 +593,14 @@ const generateTranscript = async (req, res) => {
                         }
                     }));
                 });
-                return new TableRow({ children: cells, tableHeader: rowIndex === 0 });
+
+                // Set the height for the last row
+                const isLastRow = rowIndex === academicHistoryData.length - 1;
+                return new TableRow({
+                    children: cells,
+                    tableHeader: rowIndex === 0,
+                    height: isLastRow ? { value: 397, rule: HeightRule.EXACT } : undefined
+                });
             }),
         });
         children.push(academicHistoryTable);
@@ -649,8 +669,6 @@ const generateTranscript = async (req, res) => {
 
         children.push(new Paragraph("")); // Spacing
         children.push(new Paragraph("")); // Spacing
-        children.push(new Paragraph("")); // Spacing
-        children.push(new Paragraph("")); // Spacing
 
         children.push(new Paragraph({
             children: [
@@ -666,54 +684,83 @@ const generateTranscript = async (req, res) => {
             alignment: AlignmentType.CENTER
         }));
 
-        children.push(new Paragraph({
+        /*children.push(new Paragraph({
             children: [
                 new PageBreak()
             ]
-        }));
+        }));*/
 
         // Hasta aqui vamos mas o menos bien
 
+        children.push(new Paragraph("")); // Spacing
+        children.push(new Paragraph("")); // Spacing
+        children.push(new Paragraph("")); // Spacing
+        children.push(new Paragraph("")); // Spacing
+        children.push(new Paragraph("")); // Spacing
+        children.push(new Paragraph("")); // Spacing
+        children.push(new Paragraph("")); // Spacing
+        children.push(new Paragraph("")); // Spacing
+        children.push(new Paragraph("")); // Spacing
+        children.push(new Paragraph("")); // Spacing
+
         // --- CEFR Competencies Title --- [cite: 7]
         children.push(new Paragraph({
-            text: "COMPETENCIAS EN FUNCIÓN DEL NIVEL DE DOMINIO DE ACUERDO CON EL MARCO COMÚN EUROPEO DE REFERENCIA",
-            alignment: AlignmentType.CENTER,
-            bold: true,
+            children: [
+                new TextRun({ text: "COMPETENCIAS EN FUNCIÓN DEL NIVEL DE DOMINIO DE ACUERDO CON EL MARCO                      COMÚN EUROPEO DE REFERENCIA", font: "Montserrat", size: 22, bold: true })
+            ],
+            alignment: AlignmentType.CENTER
         }));
-        children.push(new Paragraph("")); // Spacing
 
         // --- TABLE 2: CEFR Competencies --- [cite: 8]
         const cefrData = [
             // Data from[cite: 8]. Columns: (empty), LEVEL, (empty), DESCRIPTION 1, DESCRIPTION 2
-            [null, "C2", null, "Es capaz de comprender con facilidad prácticamente todo lo que oye o lee. Sabe reconstruir la información y los argumentos procedentes de diversas fuentes, ya sean en lengua hablada o escrita, y presentarlos de manera coherente y resumida.", "Puede expresarse espontáneamente, con gran fluidez y con grado de precisión que le permite diferenciar pequeños matices de significado incluso en situaciones de mayor complejidad."],
-            [null, "C1", null, "Es capaz de comprender una amplia variedad de textos extensos y con cierto nivel de exigencia, así como reconocer en ellos sentidos implícitos. Sabe expresarse de forma fluida y espontanea sin muestras muy evidentes de esfuerzo para encontrar la expresión adecuada. Puede hacer un uso flexible y efectivo del idioma para fines sociales, académicos y profesionales.", "Puede producir textos claros, bien estructurados y detallados sobre temas de cierta complejidad, mostrando un uso correcto de los mecanismos de organización, articulación y cohesión del texto."],
-            [null, "B2", null, "Es capaz de entender las ideas principales de textos complejos que traten de temas tanto concretos como abstractos, incluso si son de carácter técnico, siempre que estén dentro de su campo de especialización. Puede relacionarse con hablantes nativos con un grado suficiente de fluidez y naturalidad, de modo que la comunicación se realice sin esfuerzo por parte de los interlocutores.", "Puede producir textos claros y detallados sobre temas diversos, así como defender un punto de vista sobre temas generales, indicando los pros y los contras de las distintas opciones."],
-            [null, "B1", null, "Es capaz de comprender los puntos principales de textos claros y en lengua estándar si tratan sobre cuestiones que le son conocidas, ya sea en situaciones de trabajo, de estudio o de ocio. Sabe desenvolverse en la mayor parte de las situaciones que pueden surgir durante un viaje por zonas donde se utiliza la lengua. Es capaz de producir textos sencillos y coherentes sobre temas que le son familiares o en los que tiene un interés personal. Puede describir experiencias, acontecimientos, deseos y aspiraciones, así como justificar brevemente sus opiniones o explicar sus planes."],
-            [null, "A2", null, "Es capaz de comprender frases y expresiones de uso frecuente relacionadas con áreas de experiencia que le son especialmente relevantes (información básica sobre sí mismo y su familia, compras, lugares de interés, ocupaciones, etc.).", "Sabe comunicarse a la hora de llevar a cabo tareas simples y cotidianas que no requieren más que intercambios sencillos y directos de información sobre cuestiones que le son conocidas o habituales. Sabe describir en términos sencillos aspectos de su pasado y su entorno, así como cuestiones relacionadas con sus necesidades inmediatas."],
-            [null, "A1", null, "Es capaz de comprender y utilizar expresiones cotidianas de uso muy frecuente, así como, frases sencillas destinadas a satisfacer necesidades de tipo inmediato. Puede presentarse a sí mismo y a otros, pedir y dar información personal básica sobre domicilio, sus pertenencias y las personas que conoce. Puede relacionarse de forma elemental siempre que su interlocutor hable despacio y con claridad y esté dispuesto a cooperar."],
+            ["C2", "Es capaz de comprender con facilidad prácticamente todo lo que oye o lee. Sabe reconstruir la información y los argumentos procedentes de diversas fuentes, ya sean en lengua hablada o escrita, y presentarlos de manera coherente y resumida. Puede expresarse espontáneamente, con gran fluidez y con grado de precisión que le permite diferenciar pequeños matices de significado incluso en situaciones de mayor complejidad."],
+            ["C1", "Es capaz de comprender una amplia variedad de textos extensos y con cierto nivel de exigencia, así como reconocer en ellos sentidos implícitos. Sabe expresarse de forma fluida y espontanea sin muestras muy evidentes de esfuerzo para encontrar la expresión adecuada. Puede hacer un uso flexible y efectivo del idioma para fines sociales, académicos y profesionales. Puede producir textos claros, bien estructurados y detallados sobre temas de cierta complejidad, mostrando un uso correcto de los mecanismos de organización, articulación y cohesión del texto."],
+            ["B2", "Es capaz de entender las ideas principales de textos complejos que traten de temas tanto concretos como abstractos, incluso si son de carácter técnico, siempre que estén dentro de su campo de especialización. Puede relacionarse con hablantes nativos con un grado suficiente de fluidez y naturalidad, de modo que la comunicación se realice sin esfuerzo por parte de los interlocutores. Puede producir textos claros y detallados sobre temas diversos, así como defender un punto de vista sobre temas generales, indicando los pros y los contras de las distintas opciones."],
+            ["B1", "Es capaz de comprender los puntos principales de textos claros y en lengua estándar si tratan sobre cuestiones que le son conocidas, ya sea en situaciones de trabajo, de estudio o de ocio. Sabe desenvolverse en la mayor parte de las situaciones que pueden surgir durante un viaje por zonas donde se utiliza la lengua. Es capaz de producir textos sencillos y coherentes sobre temas que le son familiares o en los que tiene un interés personal. Puede describir experiencias, acontecimientos, deseos y aspiraciones, así como justificar brevemente sus opiniones o explicar sus planes."],
+            ["A2", "Es capaz de comprender frases y expresiones de uso frecuente relacionadas con áreas de experiencia que le son especialmente relevantes (información básica sobre sí mismo y su familia, compras, lugares de interés, ocupaciones, etc.). Sabe comunicarse a la hora de llevar a cabo tareas simples y cotidianas que no requieren más que intercambios sencillos y directos de información sobre cuestiones que le son conocidas o habituales. Sabe describir en términos sencillos aspectos de su pasado y su entorno, así como cuestiones relacionadas con sus necesidades inmediatas."],
+            ["A1", "Es capaz de comprender y utilizar expresiones cotidianas de uso muy frecuente, así como, frases sencillas destinadas a satisfacer necesidades de tipo inmediato. Puede presentarse a sí mismo y a otros, pedir y dar información personal básica sobre domicilio, sus pertenencias y las personas que conoce. Puede relacionarse de forma elemental siempre que su interlocutor hable despacio y con claridad y esté dispuesto a cooperar."],
         ];
 
+        let lastText = "";
         const cefrTable = new Table({
-            columnWidths: [500, 1000, 500, 5500, 5500], // Adjust widths: empty, level, empty, desc1, desc2
+            width: {
+                size: 100,
+                type: WidthType.PERCENTAGE,
+            },
+            layout: TableLayoutType.FIXED, // Allows columnWidths to apply
+            columnWidths: [1432, 10808],     // 1432 for first column, rest stretches
             rows: cefrData.map(rowData => {
                 return new TableRow({
                     children: rowData.map((cellContent, cellIndex) => {
                         const text = cellContent !== null ? String(cellContent) : "";
-                        const isLevelColumn = cellIndex === 1;
-                        const paragraphChildren = [new TextRun({ text: text, bold: isLevelColumn })];
+                        const isLevelColumn = cellIndex === 0;
+                        const paragraphChildren = [
+                            new TextRun({
+                                text,
+                                bold: isLevelColumn,
+                                font: "Geomanist",
+                                size: 18
+                            })
+                        ];
+                        const hasShading = lastText === "B2" || text === "B2";
+                        lastText = text;
 
                         return new TableCell({
-                            children: [new Paragraph({
-                                children: paragraphChildren,
-                                alignment: isLevelColumn ? AlignmentType.CENTER : AlignmentType.BOTH, // Center level, justify descriptions
-                            })],
+                            children: [
+                                new Paragraph({
+                                    children: paragraphChildren,
+                                    alignment: isLevelColumn ? AlignmentType.CENTER : AlignmentType.LEFT,
+                                })
+                            ],
                             verticalAlign: VerticalAlign.CENTER,
-                            borders: { // Example: add all borders
+                            borders: {
                                 top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
                                 bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
                                 left: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
                                 right: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
-                            }
+                            },
+                            shading: hasShading ? { type: ShadingType.SOLID, color: "990033" } : undefined,
                         });
                     }),
                 });
@@ -721,9 +768,6 @@ const generateTranscript = async (req, res) => {
         });
         children.push(cefrTable);
         children.push(new Paragraph("")); // Spacing
-
-        // --- IMAGE PLACEHOLDERS (BOTTOM OF PAGE) ---
-        children.push(new Paragraph({ text: "<<< Placeholder: Official Seal / Additional Logos (Bottom) >>>", alignment: AlignmentType.CENTER }));
 
         // --- Footer
 
@@ -772,7 +816,7 @@ const generateTranscript = async (req, res) => {
                 },
             },
             children: [
-                new TextRun({ text: "Av. Miguel Bernard 39, Residencial La Escalera, Alcaldía Gustavo A. Madero, 07630 Ciudad de México Tel: (55) 57296000 ext:55765 https://www.est.ipn.mx", font: "Geomanist Medium", size: 12, color: "#4D192A"}),
+                new TextRun({ text: "Av. Miguel Bernard 39, Residencial La Escalera, Alcaldía Gustavo A. Madero, 07630 Ciudad de México Tel: (55) 57296000 ext:55765 https://www.est.ipn.mx", font: "Geomanist Medium", size: 12, color: "#4D192A" }),
             ],
         }));
 
