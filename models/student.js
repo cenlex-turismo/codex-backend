@@ -7,6 +7,7 @@ const studentSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Course'
     },
+    courseType: String,
     score: Number,
     courseStart: Date,
     courseEnd: Date,

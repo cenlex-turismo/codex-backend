@@ -115,7 +115,7 @@ const getStudentByIdNumber = async (req, res) => {
 const registerCourseGradeByIdNumber = async (req, res) => {
     try {
         const idNumber = req.params.id;
-        const { course, score, courseStart, courseEnd, teacher } = req.body;
+        const { course, courseType, score, courseStart, courseEnd, teacher } = req.body;
 
         // Find the student by idNumber
         const student = await Student.findOne({ idNumber: idNumber });
@@ -131,6 +131,7 @@ const registerCourseGradeByIdNumber = async (req, res) => {
             // If the course already exists, update the score
             student.courseGrades[existingGradeIndex] = {
                 course: course,
+                courseType: courseType,
                 score: score,
                 courseStart: courseStart,
                 courseEnd: courseEnd,
@@ -140,6 +141,7 @@ const registerCourseGradeByIdNumber = async (req, res) => {
             // If the course does not exist, add a new entry
             student.courseGrades.push({
                 course: course,
+                courseType: courseType,
                 score: score,
                 courseStart: courseStart,
                 courseEnd: courseEnd,
@@ -519,7 +521,7 @@ const generateTranscript = async (req, res) => {
                 academicHistoryData.push([
                     mod.name,
                     mod.mcer,
-                    "Sabatino",
+                    grade.courseType,
                     period,
                     "40",
                     grade.score?.toString() ?? "---"
